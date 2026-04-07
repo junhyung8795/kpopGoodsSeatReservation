@@ -1,0 +1,1 @@
+CREATE DATABASE kpop_db;
