@@ -2,6 +2,8 @@ package com.park.kpopGoodsReservation.jwt;
 
 import com.park.kpopGoodsReservation.entity.Member;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 
@@ -10,8 +12,13 @@ import java.util.Date;
 
 @Component
 public class JwtProvider {
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private final SecretKey key = Jwts.SIG.HS256.key().build();
+    private SecretKey getKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
     private final long EXPIRATION = 1000 * 60 * 60 * 24; // 1일
 
     // JWT 생성 (Member 객체 받도록 변경)
@@ -22,7 +29,7 @@ public class JwtProvider {
                 .claim("nickname", member.getNickname()) // nickname 담기
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(key)
+                .signWith(getKey())
                 .compact();
     }
 
@@ -39,7 +46,7 @@ public class JwtProvider {
     // 공통 claims 꺼내기
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(getKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -48,10 +55,7 @@ public class JwtProvider {
     // JWT 유효성 검증
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
+            getClaims(token);
             return true;
         } catch (Exception e) {
             return false;
