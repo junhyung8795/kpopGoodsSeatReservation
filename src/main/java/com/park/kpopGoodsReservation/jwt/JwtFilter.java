@@ -1,13 +1,12 @@
 package com.park.kpopGoodsReservation.jwt;
 
-import com.park.kpopGoodsReservation.entity.Member;
-import com.park.kpopGoodsReservation.repository.MemberRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,11 +18,11 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
-
+    // private final MemberRepository memberRepository; ← 제거
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -31,6 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 1. 쿠키에서 토큰 꺼내기
         String token = extractToken(request);
+        log.info("토큰 존재 여부: {}", token != null);
 
         // 2. 토큰 있고 유효하면 인증 처리
         if (token != null && jwtProvider.validateToken(token)) {
@@ -39,22 +39,19 @@ public class JwtFilter extends OncePerRequestFilter {
             String email = jwtProvider.getEmail(token);
 
             // 4. DB에서 유저 조회
-            Member member = memberRepository.findByEmail(email)
-                    .orElse(null);
+            String role = jwtProvider.getRole(token);
+            log.info("인증된 유저: {}, 권한: {}", email, role); // ← 여기 찍히면 필터 동작 ✅
 
-            if (member != null) {
-                // 5. 인증 객체 생성
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                member,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + member.getRole().name()))
-                        );
 
-                // 6. SecurityContext에 인증 정보 저장
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            email, // Member 객체 대신 이메일만
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        }
+
 
         // 7. 다음 필터로 이동
         filterChain.doFilter(request, response);

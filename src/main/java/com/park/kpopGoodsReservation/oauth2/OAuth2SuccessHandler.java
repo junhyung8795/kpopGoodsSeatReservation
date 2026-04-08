@@ -42,7 +42,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 ));
 
         // 3. JWT 발급
-        String token = jwtProvider.generateToken(member.getEmail());
+        String token = jwtProvider.generateToken(member);
 
         // 4. 쿠키에 토큰 담기
         Cookie cookie = new Cookie("token", token);
