@@ -22,3 +22,5 @@ spring:
             scope:
               - email
               - profile
+jwt:
+  secret: ${JWT_SECRET}
