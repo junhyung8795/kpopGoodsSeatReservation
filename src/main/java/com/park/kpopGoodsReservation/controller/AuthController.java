@@ -10,4 +10,9 @@ public class AuthController {
     public String loginPage() {
         return "login"; // templates/login.html 반환
     }
+
+    @GetMapping("/main")
+    public String mainPage() {
+        return "main"; // templates/main.html
+    }
 }
