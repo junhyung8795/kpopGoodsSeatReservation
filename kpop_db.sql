@@ -1,1 +1,2 @@
-CREATE DATABASE kpop_db;
+-- CREATE DATABASE kpop_db;
+SELECT * FROM member;
